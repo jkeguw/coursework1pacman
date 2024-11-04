@@ -4,30 +4,32 @@
 #include "PowerUpManager.h"
 #include <algorithm>
 #include "ConsoleBuffer.h"
+#include "GameConfig.h"
+
 
 PowerUpManager::PowerUpManager()
-    : gen(rd()), lastSpawnTime(0), spawnInterval(15000),
+    : gen(rd()), lastSpawnTime(0),
       scoreMultiplier(1.0f), playerSpeed(1.0f), ghostSpeed(1.0f),
       wallPassEnabled(false) {}
 
 void PowerUpManager::update(int currentTime, const std::vector<std::vector<char>>& map) {
-    // 移除过期的道具
+    // 移除过期或被收集的道具
     powerUps.erase(
         std::remove_if(powerUps.begin(), powerUps.end(),
             [currentTime](const auto& powerUp) {
-                return powerUp->shouldRemove(currentTime);
+                return !powerUp->isActive() ||
+                       (currentTime - powerUp->getSpawnTime() > GameConfig::POWERUP_PERSIST_TIME);
             }
         ),
         powerUps.end()
     );
 
-    // 检查是否需要生成新道具
-    if (currentTime - lastSpawnTime > spawnInterval) {
+    // 如果没有道具存在，且距离上次生成时间已超过间隔，则生成新道具
+    if (powerUps.empty() && currentTime - lastSpawnTime > GameConfig::POWERUP_SPAWN_INTERVAL) {
         spawnPowerUp(map);
         lastSpawnTime = currentTime;
     }
 
-    // 更新效果状态
     updateEffects(currentTime);
 }
 
@@ -52,7 +54,8 @@ PowerUp::Type PowerUpManager::getRandomPowerUpType() {
 void PowerUpManager::spawnPowerUp(const std::vector<std::vector<char>>& map) {
     Position pos = getRandomPosition(map);
     PowerUp::Type type = getRandomPowerUpType();
-    powerUps.push_back(std::make_unique<PowerUp>(type, pos));
+    auto newPowerUp = std::make_unique<PowerUp>(type, pos, GameConfig::POWERUP_PERSIST_TIME);
+    powerUps.push_back(std::move(newPowerUp));
 }
 
 bool PowerUpManager::checkCollision(const Position& playerPos) {

@@ -32,6 +32,23 @@ namespace GameConfig {
     //地图尺寸
     extern const int MAP_WIDTH;
     extern const int MAP_HEIGHT;
+
+    // 道具系统配置
+    const int POWERUP_PERSIST_TIME = 30000;    // 道具持续显示时间（毫秒）
+    const int POWERUP_SPAWN_INTERVAL = 15000;  // 道具生成间隔（毫秒）
+
+    // 道具效果持续时间（毫秒）
+    const int SPEED_BOOST_DURATION = 5000;
+    const int GHOST_FREEZER_DURATION = 7000;
+    const int POINT_MULTIPLIER_DURATION = 10000;
+    const int WALL_PASS_DURATION = 4000;
+    const int GHOST_VACUUM_DURATION = 8000;
+    const int TIME_SLOW_DURATION = 6000;
+
+    // 道具效果强度
+    const float SPEED_BOOST_MULTIPLIER = 2.0f;
+    const float POINT_MULTIPLIER_VALUE = 2.0f;
+    const float TIME_SLOW_FACTOR = 0.5f;
 }
 
 #endif //GAMECONFIG_H

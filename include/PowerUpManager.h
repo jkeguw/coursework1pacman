@@ -14,11 +14,10 @@
 class PowerUpManager {
 private:
     std::vector<std::unique_ptr<PowerUp>> powerUps;
-    std::vector<std::pair<PowerUp::Type, int>> activeEffects;  // 类型和结束时间
+    std::vector<std::pair<PowerUp::Type, int>> activeEffects;
     std::random_device rd;
     std::mt19937 gen;
     int lastSpawnTime;
-    int spawnInterval;
     float scoreMultiplier;
     float playerSpeed;
     float ghostSpeed;

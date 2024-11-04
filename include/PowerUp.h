@@ -25,6 +25,7 @@ public:
         float magnitude;      // 效果强度
         std::string message; // 激活时显示的消息
     };
+    int getSpawnTime() const { return spawnTime; }
 
 private:
     Type type;

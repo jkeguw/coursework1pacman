@@ -21,3 +21,13 @@
 3301	3908	7524306599900280	untitled.exe	367d7b6c102501b9
 7	3737	7524312707216724	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
 3737	4367	7524312744515514	untitled.exe	367d7b6c102501b9
+7	3374	7524343442589497	CMakeFiles/untitled.dir/src/main.cpp.obj	aed2b2c4babe19ba
+60	3601	7524343443119058	CMakeFiles/untitled.dir/src/PowerUpManager.cpp.obj	55e2ef877fdfbd80
+25	3905	7524343442773443	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
+16	144	7524346170644313	CMakeFiles/untitled.dir/src/GameConfig.cpp.obj	c16b0f59144cc219
+34	495	7524346170817055	CMakeFiles/untitled.dir/src/Pacman.cpp.obj	1e29a81845f91ca3
+68	2302	7524346171161516	CMakeFiles/untitled.dir/src/PowerUp.cpp.obj	3c78e6d4a646ea72
+4	2841	7524346170522038	CMakeFiles/untitled.dir/src/main.cpp.obj	aed2b2c4babe19ba
+85	3083	7524346171330721	CMakeFiles/untitled.dir/src/PowerUpManager.cpp.obj	55e2ef877fdfbd80
+51	3402	7524346170985071	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
+3402	4024	7524346204504627	untitled.exe	367d7b6c102501b9

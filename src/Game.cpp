@@ -204,7 +204,6 @@ void Game::updateGame() {
 }
 
 void Game::displayGame() {
-    // 清除缓冲区
     console->clear();
 
     // 创建用于显示的地图副本
@@ -214,19 +213,23 @@ void Game::displayGame() {
     Position pPos = pacman.getPosition();
     displayMap[pPos.y][pPos.x] = pacman.getSymbol();
 
-    // 显示道具
-    for (const auto& powerUp : powerUpManager->getPowerUps()) {
-        if (powerUp->isActive()) {
-            Position pos = powerUp->getPosition();
-            displayMap[pos.y][pos.x] = powerUp->getSymbol();
+    // 放置存活的幽灵
+    for (size_t i = 0; i < ghosts.size(); ++i) {
+        if (ghostsAlive[i]) {
+            Position gPos = ghosts[i].getPosition();
+            displayMap[gPos.y][gPos.x] = ghosts[i].getSymbol();
         }
     }
 
-    // 只显示存活的幽灵
-    for (size_t i = 0; i < ghosts.size(); ++i) {
-        if (ghostsAlive[i]) {  // 只有存活的幽灵才显示
-            Position gPos = ghosts[i].getPosition();
-            displayMap[gPos.y][gPos.x] = ghosts[i].getSymbol();
+    // 显示道具（确保在幽灵和吃豆人之后显示，这样不会被覆盖）
+    for (const auto& powerUp : powerUpManager->getPowerUps()) {
+        if (powerUp->isActive()) {
+            Position pos = powerUp->getPosition();
+            // 只在空地或豆子上显示道具
+            if (map[pos.y][pos.x] == GameConfig::EMPTY ||
+                map[pos.y][pos.x] == GameConfig::DOT) {
+                displayMap[pos.y][pos.x] = powerUp->getSymbol();
+                }
         }
     }
 
@@ -235,6 +238,9 @@ void Game::displayGame() {
 
     // 绘制信息面板
     drawInfoPanel();
+
+    // 显示活动效果
+    displayActiveEffects();
 
     // 交换缓冲区
     console->swap();
