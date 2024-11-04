@@ -13,11 +13,15 @@ Game::Game()
       score(0),
       gameOver(false),
       powerMode(false),
+      powerModeTimeLeft(0),
       level(1) {
 
     initializeMap();
+    // 初始化两个幽灵
     ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y));
     ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y));
+    // 初始化幽灵存活状态
+    ghostsAlive = std::vector<bool>(ghosts.size(), true);
 
     console = std::make_unique<ConsoleBuffer>(TOTAL_WIDTH, MAP_HEIGHT);
     remainingDots = countRemainingDots();
@@ -62,19 +66,28 @@ void Game::drawInfoPanel() {
     console->drawString(MAP_WIDTH + 2, 9, "DOTS LEFT:");
     console->drawString(MAP_WIDTH + 2, 10, centerText(std::to_string(remainingDots), INFO_WIDTH - 3));
 
-    // 状态显示
+    // 能量模式状态
     if (powerMode) {
-        console->drawString(MAP_WIDTH + 2, 12, "POWER MODE!");
+        int secondsLeft = powerModeTimeLeft / 1000;
+        std::string powerStatus = "POWER MODE: " + std::to_string(secondsLeft) + "s";
+        console->drawString(MAP_WIDTH + 2, 12, powerStatus);
+    }
+
+    // 幽灵状态
+    console->drawString(MAP_WIDTH + 2, 14, "GHOSTS:");
+    for (size_t i = 0; i < ghosts.size(); ++i) {
+        std::string ghostStatus = ghostsAlive[i] ? "Ghost " + std::to_string(i+1) + ": Active"
+                                                : "Ghost " + std::to_string(i+1) + ": Eaten";
+        console->drawString(MAP_WIDTH + 2, 15 + i, ghostStatus);
     }
 
     // 控制说明
-    console->drawString(MAP_WIDTH + 2, 14, "CONTROLS:");
-    console->drawString(MAP_WIDTH + 2, 15, " W - Up");
-    console->drawString(MAP_WIDTH + 2, 16, " S - Down");
-    console->drawString(MAP_WIDTH + 2, 17, " A - Left");
-    console->drawString(MAP_WIDTH + 2, 18, " D - Right");
+    console->drawString(MAP_WIDTH + 2, 18, "CONTROLS:");
+    console->drawString(MAP_WIDTH + 2, 19, " W - Up");
+    console->drawString(MAP_WIDTH + 2, 20, " S - Down");
+    console->drawString(MAP_WIDTH + 2, 21, " A - Left");
+    console->drawString(MAP_WIDTH + 2, 22, " D - Right");
 
-    // 如果游戏结束，显示游戏结束信息
     if (gameOver) {
         console->drawString(MAP_WIDTH + 2, MAP_HEIGHT - 3, "GAME OVER!");
         console->drawString(MAP_WIDTH + 2, MAP_HEIGHT - 2, "Press R to");
@@ -109,6 +122,9 @@ void Game::run() {
 void Game::updateGame() {
     if (gameOver) return;
 
+    // 更新能量模式状态
+    updatePowerMode();
+
     // 更新吃豆人位置
     Position oldPos = pacman.getPosition();
     pacman.move(map);
@@ -124,18 +140,25 @@ void Game::updateGame() {
         score += GameConfig::POWER_DOT_SCORE;
         map[newPos.y][newPos.x] = GameConfig::EMPTY;
         powerMode = true;
+        powerModeTimeLeft = POWER_MODE_DURATION;
         remainingDots--;
     }
 
-    // 更新幽灵位置
-    for (auto& ghost : ghosts) {
-        ghost.move(map);
-        if (ghost.getPosition().x == pacman.getPosition().x &&
-            ghost.getPosition().y == pacman.getPosition().y) {
+    // 更新幽灵位置和检查碰撞
+    for (size_t i = 0; i < ghosts.size(); ++i) {
+        if (!ghostsAlive[i]) {
+            ghosts[i].setVisible(false);  // 确保幽灵不可见
+            continue;  // 跳过已经被吃掉的幽灵
+        }
+
+        ghosts[i].move(map);
+        if (ghosts[i].getPosition().x == pacman.getPosition().x &&
+            ghosts[i].getPosition().y == pacman.getPosition().y) {
             if (powerMode) {
+                // 吃掉幽灵
                 score += GameConfig::GHOST_SCORE;
-                // 重置幽灵位置
-                ghost = Ghost(GameConfig::GHOST_HOME_X, GameConfig::GHOST_HOME_Y);
+                ghostsAlive[i] = false;
+                ghosts[i].setVisible(false);  // 立即设置幽灵不可见
             } else {
                 gameOver = true;
                 return;
@@ -148,6 +171,14 @@ void Game::updateGame() {
         level++;
         initializeMap();
         remainingDots = countRemainingDots();
+        // 重置幽灵状态
+        for (size_t i = 0; i < ghosts.size(); ++i) {
+            ghostsAlive[i] = true;
+            ghosts[i].setVisible(true);  // 重新设置幽灵可见
+        }
+        // 重置幽灵位置
+        ghosts[0] = Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y);
+        ghosts[1] = Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y);
     }
 }
 
@@ -162,10 +193,12 @@ void Game::displayGame() {
     Position pPos = pacman.getPosition();
     displayMap[pPos.y][pPos.x] = pacman.getSymbol();
 
-    // 放置幽灵
-    for (const auto& ghost : ghosts) {
-        Position gPos = ghost.getPosition();
-        displayMap[gPos.y][gPos.x] = ghost.getSymbol();
+    // 只显示存活的幽灵
+    for (size_t i = 0; i < ghosts.size(); ++i) {
+        if (ghostsAlive[i]) {  // 只有存活的幽灵才显示
+            Position gPos = ghosts[i].getPosition();
+            displayMap[gPos.y][gPos.x] = ghosts[i].getSymbol();
+        }
     }
 
     // 绘制地图
@@ -177,6 +210,7 @@ void Game::displayGame() {
     // 交换缓冲区
     console->swap();
 }
+
 
 void Game::initializeMap() {
     // 28x31的经典吃豆人地图布局
@@ -281,4 +315,14 @@ void Game::displayGameOverScreen() {
     }
 
     console->swap();
+}
+
+void Game::updatePowerMode() {
+    if (powerMode) {
+        powerModeTimeLeft -= GameConfig::GAME_SPEED;
+        if (powerModeTimeLeft <= 0) {
+            powerMode = false;
+            powerModeTimeLeft = 0;
+        }
+    }
 }

@@ -34,7 +34,7 @@ private:
     std::unique_ptr<ConsoleBuffer> console;
     int score;
     bool gameOver;
-    bool powerMode;
+
     int remainingDots;
     int level;
 
@@ -45,8 +45,15 @@ private:
     int countRemainingDots() const;
     std::string centerText(const std::string& text, int width) const;
 
+    bool powerMode;
+    int powerModeTimeLeft;  // 能量模式剩余时间（毫秒）
+    const int POWER_MODE_DURATION = 20000;  // 能量模式持续时间（20秒）
+    std::vector<bool> ghostsAlive;  // 跟踪幽灵存活状态
+
     void handleGameOver();
     void displayGameOverScreen();
+
+    void updatePowerMode();
 
 public:
     Game();
