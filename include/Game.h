@@ -20,6 +20,8 @@ private:
     int score;
     bool gameOver;
 
+    static const int MAP_WIDTH = 28;
+    static const int MAP_HEIGHT = 31;
     void initializeMap();
     void clearScreen();
     void updateGame();

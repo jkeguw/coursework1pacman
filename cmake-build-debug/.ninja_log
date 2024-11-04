@@ -7,3 +7,9 @@
 1	2158	7524180133940249	CMakeFiles/untitled.dir/src/main.cpp.obj	aed2b2c4babe19ba
 105	2444	7524180134972993	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
 2445	2961	7524180158376146	untitled.exe	ff9c028841d097b6
+26	190	7524187183362389	CMakeFiles/untitled.dir/src/GameConfig.cpp.obj	c16b0f59144cc219
+43	543	7524187183527180	CMakeFiles/untitled.dir/src/Pacman.cpp.obj	1e29a81845f91ca3
+60	543	7524187183701053	CMakeFiles/untitled.dir/src/Ghost.cpp.obj	318a83b5d1e3c227
+6	2342	7524187183163572	CMakeFiles/untitled.dir/src/main.cpp.obj	aed2b2c4babe19ba
+78	2611	7524187183878951	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
+2611	3135	7524187209212734	untitled.exe	ff9c028841d097b6
