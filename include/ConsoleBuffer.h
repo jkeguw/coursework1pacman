@@ -12,14 +12,12 @@
 
 class ConsoleBuffer {
 public:
-    ConsoleBuffer(int width, int height);
+    ConsoleBuffer(int gameWidth, int gameHeight);
     ~ConsoleBuffer();
 
-    // 禁用拷贝
     ConsoleBuffer(const ConsoleBuffer&) = delete;
     ConsoleBuffer& operator=(const ConsoleBuffer&) = delete;
 
-    // 缓冲区操作
     void clear();
     void draw(int x, int y, char ch);
     void drawString(int x, int y, const std::string& str);
@@ -27,15 +25,27 @@ public:
     void swap();
 
 private:
-    HANDLE hConsole;              // 控制台句柄
-    HANDLE screenBuffer[2];       // 双缓冲区
-    int currentBuffer;            // 当前活动缓冲区
-    int width;                    // 缓冲区宽度
-    int height;                   // 缓冲区高度
-    CHAR_INFO* bufferData;        // 缓冲区数据
+    HANDLE hConsole;
+    HANDLE screenBuffer[2];
+    int currentBuffer;
+    int gameWidth;      // 游戏逻辑宽度
+    int gameHeight;     // 游戏逻辑高度
+    int displayWidth;   // 实际显示宽度（2倍gameWidth）
+    int displayHeight;  // 实际显示高度
+    CHAR_INFO* bufferData;
 
-    void initializeScreenBuffer();
-    void cleanupScreenBuffer();
+    // 添加字符映射表
+    static const char CHAR_PACMAN = 'C';
+    static const char CHAR_GHOST = 'M';
+    static const char CHAR_DOT = '.';
+    static const char CHAR_POWER_DOT = 'O';
+    static const char CHAR_WALL = '#';
+    static const char CHAR_EMPTY = ' ';
+
+    // 获取字符的显示属性
+    WORD getCharacterAttributes(char ch);
+    // 获取字符的显示样式
+    char getCharacterDisplay(char ch);
 };
 
 #endif //CONSOLEBUFFER_H
