@@ -81,53 +81,33 @@ void Game::drawInfoPanel() {
         console->drawString(MAP_WIDTH + 2, MAP_HEIGHT - 1, "restart");
     }
 }
-// void Game::clearScreen() {
-//     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-//     COORD coordScreen = {0, 0};
-//     DWORD cCharsWritten;
-//     CONSOLE_SCREEN_BUFFER_INFO csbi;
-//     DWORD dwConSize;
-//
-//     GetConsoleScreenBufferInfo(hConsole, &csbi);
-//     dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
-//     FillConsoleOutputCharacter(hConsole, ' ', dwConSize, coordScreen, &cCharsWritten);
-//     GetConsoleScreenBufferInfo(hConsole, &csbi);
-//     FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
-//     SetConsoleCursorPosition(hConsole, coordScreen);
-// }
 
 void Game::run() {
-    while (!gameOver) {
-        updateGame();
-        displayGame();
-        Sleep(GameConfig::GAME_SPEED);
+    while (true) {  // 主游戏循环
+        if (!gameOver) {
+            updateGame();
+            displayGame();
+            Sleep(GameConfig::GAME_SPEED);
+        } else {
+            handleGameOver();
+            if (gameOver) {  // 如果用户选择退出而不是重启
+                break;
+            }
+        }
     }
 
-    // 游戏结束后显示最终画面
-    displayGame();
-    Sleep(2000); // 显示游戏结束画面2秒
+    // 显示最终告别屏幕
+    console->clear();
+    std::string thankYou = "Thanks for playing!";
+    console->drawString((TOTAL_WIDTH - thankYou.length()) / 2, MAP_HEIGHT / 2, thankYou);
+    console->swap();
+
+    // 等待最后一次按键才退出
+    while (!_kbhit()) Sleep(100);
 }
 
 void Game::updateGame() {
-    if (gameOver) {
-        if (_kbhit()) {
-            char key = _getch();
-            if (key == 'r' || key == 'R') {
-                // 重置游戏状态
-                score = 0;
-                level = 1;
-                powerMode = false;
-                gameOver = false;
-                initializeMap();
-                pacman = Pacman(GameConfig::PACMAN_START_X, GameConfig::PACMAN_START_Y);
-                ghosts.clear();
-                ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y));
-                ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y));
-                remainingDots = countRemainingDots();
-            }
-        }
-        return;
-    }
+    if (gameOver) return;
 
     // 更新吃豆人位置
     Position oldPos = pacman.getPosition();
@@ -158,6 +138,7 @@ void Game::updateGame() {
                 ghost = Ghost(GameConfig::GHOST_HOME_X, GameConfig::GHOST_HOME_Y);
             } else {
                 gameOver = true;
+                return;
             }
             }
     }
@@ -167,7 +148,6 @@ void Game::updateGame() {
         level++;
         initializeMap();
         remainingDots = countRemainingDots();
-        // 可以增加难度，比如增加幽灵数量或速度
     }
 }
 
@@ -232,4 +212,73 @@ void Game::initializeMap() {
         {'#','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.'},
         {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'}
     };
+}
+
+void Game::handleGameOver() {
+    displayGameOverScreen();
+
+    // 清空键盘缓冲区
+    while (_kbhit()) _getch();
+
+    bool exitGame = false;
+    while (!exitGame) {
+        if (_kbhit()) {
+            char key = _getch();
+            switch (key) {
+                case 'r':
+                case 'R':
+                    // 重置游戏状态
+                    score = 0;
+                level = 1;
+                powerMode = false;
+                gameOver = false;
+                initializeMap();
+                pacman = Pacman(GameConfig::PACMAN_START_X, GameConfig::PACMAN_START_Y);
+                ghosts.clear();
+                ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y));
+                ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y));
+                remainingDots = countRemainingDots();
+                return;
+
+                case 'q':
+                case 'Q':
+                case 27:  // ESC键
+                    exitGame = true;
+                break;
+            }
+        }
+        Sleep(100);  // 减少CPU使用
+    }
+}
+
+void Game::displayGameOverScreen() {
+    console->clear();
+
+    // 显示最终游戏状态
+    std::vector<std::string> gameOverMessages = {
+        "GAME OVER!",
+        "",
+        "Final Score: " + std::to_string(score),
+        "Level Reached: " + std::to_string(level),
+        "",
+        "Press 'R' to Restart",
+        "Press 'Q' or ESC to Quit"
+    };
+
+    // 计算开始位置以居中显示消息
+    int startY = (MAP_HEIGHT - gameOverMessages.size()) / 2;
+
+    // 显示所有消息
+    for (size_t i = 0; i < gameOverMessages.size(); ++i) {
+        std::string centeredText = centerText(gameOverMessages[i], TOTAL_WIDTH);
+        console->drawString(0, startY + i, centeredText);
+    }
+
+    // 添加装饰边框
+    for (int x = 0; x < TOTAL_WIDTH; ++x) {
+        console->draw(x, startY - 2, '=');
+        console->draw(x, startY + gameOverMessages.size() + 1, '=');
+    }
+
+    console->swap();
 }

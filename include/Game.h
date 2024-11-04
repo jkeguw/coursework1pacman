@@ -45,6 +45,9 @@ private:
     int countRemainingDots() const;
     std::string centerText(const std::string& text, int width) const;
 
+    void handleGameOver();
+    void displayGameOverScreen();
+
 public:
     Game();
     void run();
