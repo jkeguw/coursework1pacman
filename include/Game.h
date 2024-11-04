@@ -11,13 +11,7 @@
 #include "ConsoleBuffer.h"
 #include <vector>
 #include <memory>
-
-#pragma once
-#include "Pacman.h"
-#include "Ghost.h"
-#include "ConsoleBuffer.h"
-#include <vector>
-#include <memory>
+#include "PowerUpManager.h"
 
 class Game {
 public:
@@ -29,6 +23,7 @@ public:
 
 private:
     std::vector<std::vector<char>> map;
+    std::unique_ptr<PowerUpManager> powerUpManager;
     Pacman pacman;
     std::vector<Ghost> ghosts;
     std::unique_ptr<ConsoleBuffer> console;
@@ -55,6 +50,9 @@ private:
 
     void updatePowerMode();
 
+    // 添加显示效果相关
+    void displayPowerUps();
+    void displayActiveEffects();
 public:
     Game();
     void run();

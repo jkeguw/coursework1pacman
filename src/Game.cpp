@@ -17,13 +17,12 @@ Game::Game()
       level(1) {
 
     initializeMap();
-    // 初始化两个幽灵
     ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y));
     ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y));
-    // 初始化幽灵存活状态
     ghostsAlive = std::vector<bool>(ghosts.size(), true);
 
     console = std::make_unique<ConsoleBuffer>(TOTAL_WIDTH, MAP_HEIGHT);
+    powerUpManager = std::make_unique<PowerUpManager>();
     remainingDots = countRemainingDots();
 }
 
@@ -122,48 +121,69 @@ void Game::run() {
 void Game::updateGame() {
     if (gameOver) return;
 
+    int currentTime = GetTickCount();
+
     // 更新能量模式状态
     updatePowerMode();
 
+    // 更新道具系统
+    powerUpManager->update(currentTime, map);
+
     // 更新吃豆人位置
     Position oldPos = pacman.getPosition();
-    pacman.move(map);
-    Position newPos = pacman.getPosition();
+    float speed = powerUpManager->getPlayerSpeed();
 
-    // 检查豆子收集
-    if (map[newPos.y][newPos.x] == GameConfig::DOT) {
-        score += GameConfig::NORMAL_DOT_SCORE;
-        map[newPos.y][newPos.x] = GameConfig::EMPTY;
-        remainingDots--;
-    }
-    else if (map[newPos.y][newPos.x] == GameConfig::POWER_DOT) {
-        score += GameConfig::POWER_DOT_SCORE;
-        map[newPos.y][newPos.x] = GameConfig::EMPTY;
-        powerMode = true;
-        powerModeTimeLeft = POWER_MODE_DURATION;
-        remainingDots--;
-    }
+    for (int i = 0; i < static_cast<int>(std::max(1.0f, speed)); ++i) {
+        Position currentPos = pacman.getPosition();
+        pacman.move(map);
+        Position newPos = pacman.getPosition();
 
-    // 更新幽灵位置和检查碰撞
-    for (size_t i = 0; i < ghosts.size(); ++i) {
-        if (!ghostsAlive[i]) {
-            ghosts[i].setVisible(false);  // 确保幽灵不可见
-            continue;  // 跳过已经被吃掉的幽灵
+        // 检查是否可以穿墙
+        if (!powerUpManager->isWallPassEnabled() &&
+            map[newPos.y][newPos.x] == GameConfig::WALL) {
+            // 撤销移动
+            pacman = Pacman(currentPos.x, currentPos.y);
+            break;
         }
 
-        ghosts[i].move(map);
-        if (ghosts[i].getPosition().x == pacman.getPosition().x &&
-            ghosts[i].getPosition().y == pacman.getPosition().y) {
-            if (powerMode) {
-                // 吃掉幽灵
-                score += GameConfig::GHOST_SCORE;
-                ghostsAlive[i] = false;
-                ghosts[i].setVisible(false);  // 立即设置幽灵不可见
-            } else {
-                gameOver = true;
-                return;
+        // 检查豆子收集
+        if (map[newPos.y][newPos.x] == GameConfig::DOT) {
+            score += GameConfig::NORMAL_DOT_SCORE * powerUpManager->getScoreMultiplier();
+            map[newPos.y][newPos.x] = GameConfig::EMPTY;
+            remainingDots--;
+        }
+        else if (map[newPos.y][newPos.x] == GameConfig::POWER_DOT) {
+            score += GameConfig::POWER_DOT_SCORE * powerUpManager->getScoreMultiplier();
+            map[newPos.y][newPos.x] = GameConfig::EMPTY;
+            powerMode = true;
+            powerModeTimeLeft = POWER_MODE_DURATION;
+            remainingDots--;
+        }
+    }
+
+    // 检查道具碰撞
+    powerUpManager->checkCollision(pacman.getPosition());
+
+    // 更新幽灵位置和检查碰撞
+    float ghostSpeedMultiplier = powerUpManager->getGhostSpeed();
+    for (size_t i = 0; i < ghosts.size(); ++i) {
+        if (!ghostsAlive[i]) continue;
+
+        // 根据速度修改器更新幽灵
+        if (ghostSpeedMultiplier > 0.0f) {  // 如果不是被冻结
+            ghosts[i].move(map);
+            if (ghosts[i].getPosition().x == pacman.getPosition().x &&
+                ghosts[i].getPosition().y == pacman.getPosition().y) {
+                if (powerMode) {
+                    score += GameConfig::GHOST_SCORE * powerUpManager->getScoreMultiplier();
+                    ghostsAlive[i] = false;
+                    ghosts[i].setVisible(false);
+                } else {
+                    gameOver = true;
+                    return;
+                }
             }
-            }
+        }
     }
 
     // 检查是否完成关卡
@@ -171,14 +191,15 @@ void Game::updateGame() {
         level++;
         initializeMap();
         remainingDots = countRemainingDots();
-        // 重置幽灵状态
-        for (size_t i = 0; i < ghosts.size(); ++i) {
+        // 重置幽灵
+        for (size_t i = 0; i < ghostsAlive.size(); ++i) {
             ghostsAlive[i] = true;
-            ghosts[i].setVisible(true);  // 重新设置幽灵可见
+            ghosts[i].setVisible(true);
         }
-        // 重置幽灵位置
         ghosts[0] = Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y);
         ghosts[1] = Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y);
+        // 重置道具系统
+        powerUpManager->reset();
     }
 }
 
@@ -192,6 +213,14 @@ void Game::displayGame() {
     // 放置吃豆人
     Position pPos = pacman.getPosition();
     displayMap[pPos.y][pPos.x] = pacman.getSymbol();
+
+    // 显示道具
+    for (const auto& powerUp : powerUpManager->getPowerUps()) {
+        if (powerUp->isActive()) {
+            Position pos = powerUp->getPosition();
+            displayMap[pos.y][pos.x] = powerUp->getSymbol();
+        }
+    }
 
     // 只显示存活的幽灵
     for (size_t i = 0; i < ghosts.size(); ++i) {
@@ -324,5 +353,58 @@ void Game::updatePowerMode() {
             powerMode = false;
             powerModeTimeLeft = 0;
         }
+    }
+}
+
+void Game::displayActiveEffects() {
+    int yPos = MAP_HEIGHT - 10;
+
+    // 获取所有激活的效果
+    const auto& powerUps = powerUpManager->getPowerUps();
+    for (const auto& powerUp : powerUps) {
+        if (!powerUp->isActive()) continue;
+
+        std::string effectName;
+        switch (powerUp->getType()) {
+            case PowerUp::Type::SPEED_BOOST:
+                effectName = "SPEED UP";
+            break;
+            case PowerUp::Type::GHOST_FREEZER:
+                effectName = "FREEZE";
+            break;
+            case PowerUp::Type::POINT_MULTIPLIER:
+                effectName = "DOUBLE POINTS";
+            break;
+            case PowerUp::Type::WALL_PASS:
+                effectName = "WALL PASS";
+            break;
+            case PowerUp::Type::GHOST_VACUUM:
+                effectName = "GHOST VACUUM";
+            break;
+            case PowerUp::Type::TIME_SLOW:
+                effectName = "TIME SLOW";
+            break;
+        }
+
+        console->drawString(MAP_WIDTH + 2, yPos, "POWER-UP: " + effectName);
+        yPos += 2;
+    }
+
+    // 显示当前激活的效果状态
+    if (powerUpManager->getScoreMultiplier() > 1.0f) {
+        console->drawString(MAP_WIDTH + 2, yPos, "2X SCORE ACTIVE");
+        yPos += 2;
+    }
+    if (powerUpManager->getPlayerSpeed() > 1.0f) {
+        console->drawString(MAP_WIDTH + 2, yPos, "SPEED BOOST ACTIVE");
+        yPos += 2;
+    }
+    if (powerUpManager->getGhostSpeed() < 1.0f) {
+        console->drawString(MAP_WIDTH + 2, yPos, "GHOSTS SLOWED");
+        yPos += 2;
+    }
+    if (powerUpManager->isWallPassEnabled()) {
+        console->drawString(MAP_WIDTH + 2, yPos, "WALL PASS ACTIVE");
+        yPos += 2;
     }
 }

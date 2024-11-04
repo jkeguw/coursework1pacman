@@ -24,4 +24,9 @@ add_executable(untitled src/main.cpp
         src/Game.cpp
         include/ConsoleBuffer.h
         src/ConsoleBuffer.cpp
+        include/PowerUp.h
+        include/PowerUpManager.h
+        include/PowerUpEffect.h
+        src/PowerUp.cpp
+        src/PowerUpManager.cpp
 )
