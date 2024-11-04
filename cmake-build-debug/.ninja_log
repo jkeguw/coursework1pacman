@@ -1,0 +1,9 @@
+# ninja log v6
+37	150	7524180134296167	CMakeFiles/untitled.dir/src/GameConfig.cpp.obj	c16b0f59144cc219
+19	152	7524180134123094	CMakeFiles/untitled.dir/src/Position.cpp.obj	545e64f8e41a8f58
+54	474	7524180134471534	CMakeFiles/untitled.dir/src/Character.cpp.obj	790d873a1f71952e
+71	496	7524180134643035	CMakeFiles/untitled.dir/src/Pacman.cpp.obj	1e29a81845f91ca3
+87	517	7524180134805478	CMakeFiles/untitled.dir/src/Ghost.cpp.obj	318a83b5d1e3c227
+1	2158	7524180133940249	CMakeFiles/untitled.dir/src/main.cpp.obj	aed2b2c4babe19ba
+105	2444	7524180134972993	CMakeFiles/untitled.dir/src/Game.cpp.obj	94dae89a1ad11e2f
+2445	2961	7524180158376146	untitled.exe	ff9c028841d097b6
