@@ -2,17 +2,18 @@
 // Created by XOS on 24-11-4.
 //
 #include "../include/Game.h"
-#include <ctime>
 
-Game::Game() : pacman(1, 1), score(0), gameOver(false) {
-    srand(static_cast<unsigned int>(time(nullptr)));
+Game::Game()
+    : pacman(GameConfig::PACMAN_START_X, GameConfig::PACMAN_START_Y),
+      score(0),
+      gameOver(false) {
 
     initializeMap();
-    ghosts.push_back(Ghost(8, 1));
-    ghosts.push_back(Ghost(8, 5));
+    ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X - 2, GameConfig::GHOST_HOME_Y));
+    ghosts.push_back(Ghost(GameConfig::GHOST_HOME_X + 2, GameConfig::GHOST_HOME_Y));
 
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
+    console = std::make_unique<ConsoleBuffer>(GameConfig::MAP_WIDTH,
+                                            GameConfig::MAP_HEIGHT + 2);
 }
 
 void Game::initializeMap() {
@@ -51,29 +52,31 @@ void Game::initializeMap() {
     };
 }
 
-void Game::clearScreen() {
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    COORD coordScreen = {0, 0};
-    DWORD cCharsWritten;
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    DWORD dwConSize;
-
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
-    dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
-    FillConsoleOutputCharacter(hConsole, ' ', dwConSize, coordScreen, &cCharsWritten);
-    GetConsoleScreenBufferInfo(hConsole, &csbi);
-    FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
-    SetConsoleCursorPosition(hConsole, coordScreen);
-}
+// void Game::clearScreen() {
+//     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+//     COORD coordScreen = {0, 0};
+//     DWORD cCharsWritten;
+//     CONSOLE_SCREEN_BUFFER_INFO csbi;
+//     DWORD dwConSize;
+//
+//     GetConsoleScreenBufferInfo(hConsole, &csbi);
+//     dwConSize = csbi.dwSize.X * csbi.dwSize.Y;
+//     FillConsoleOutputCharacter(hConsole, ' ', dwConSize, coordScreen, &cCharsWritten);
+//     GetConsoleScreenBufferInfo(hConsole, &csbi);
+//     FillConsoleOutputAttribute(hConsole, csbi.wAttributes, dwConSize, coordScreen, &cCharsWritten);
+//     SetConsoleCursorPosition(hConsole, coordScreen);
+// }
 
 void Game::run() {
     while (!gameOver) {
-        clearScreen();
         updateGame();
         displayGame();
         Sleep(GameConfig::GAME_SPEED);
     }
-    std::cout << "\nGame Over! Final Score: " << score << std::endl;
+
+    // 游戏结束后显示最终画面
+    displayGame();
+    Sleep(2000); // 显示游戏结束画面2秒
 }
 
 void Game::updateGame() {
@@ -97,24 +100,40 @@ void Game::updateGame() {
 }
 
 void Game::displayGame() {
+    // 清除缓冲区
+    console->clear();
+
+    // 创建用于显示的地图副本
     std::vector<std::vector<char>> displayMap = map;
 
+    // 放置吃豆人
     Position pPos = pacman.getPosition();
     displayMap[pPos.y][pPos.x] = pacman.getSymbol();
 
+    // 放置幽灵
     for (const auto& ghost : ghosts) {
         Position gPos = ghost.getPosition();
         displayMap[gPos.y][gPos.x] = ghost.getSymbol();
     }
 
-    std::cout << "\n  PACMAN GAME\n\n";
-    for (const auto& row : displayMap) {
-        std::cout << "  ";
-        for (char cell : row) {
-            std::cout << cell << ' ';
-        }
-        std::cout << '\n';
+    // 绘制地图
+    console->drawMatrix(displayMap);
+
+    // 绘制分数
+    std::string scoreText = "Score: " + std::to_string(score);
+    console->drawString(0, GameConfig::MAP_HEIGHT, scoreText);
+
+    // 绘制控制说明
+    console->drawString(0, GameConfig::MAP_HEIGHT + 1, "Use WASD keys to move");
+
+    // 如果游戏结束，显示游戏结束消息
+    if (gameOver) {
+        std::string gameOverText = "GAME OVER!";
+        console->drawString((GameConfig::MAP_WIDTH - gameOverText.length()) / 2,
+                          GameConfig::MAP_HEIGHT / 2,
+                          gameOverText);
     }
-    std::cout << "\n  Score: " << score << "\n";
-    std::cout << "  Use WASD keys to move\n";
+
+    // 交换缓冲区
+    console->swap();
 }

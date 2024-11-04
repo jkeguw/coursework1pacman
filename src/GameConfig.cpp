@@ -29,4 +29,8 @@ namespace GameConfig {
     // 幽灵初始位置（中心）
     const int GHOST_HOME_X = 14;
     const int GHOST_HOME_Y = 14;
+
+    //地图
+    const int MAP_WIDTH = 28;
+    const int MAP_HEIGHT = 31;
 }

@@ -22,4 +22,6 @@ add_executable(untitled src/main.cpp
         src/Ghost.cpp
         include/Game.h
         src/Game.cpp
+        include/ConsoleBuffer.h
+        src/ConsoleBuffer.cpp
 )

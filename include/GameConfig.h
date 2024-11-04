@@ -29,6 +29,9 @@ namespace GameConfig {
     extern const int PACMAN_START_Y;
     extern const int GHOST_HOME_X;
     extern const int GHOST_HOME_Y;
+    //地图尺寸
+    extern const int MAP_WIDTH;
+    extern const int MAP_HEIGHT;
 }
 
 #endif //GAMECONFIG_H

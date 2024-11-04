@@ -8,22 +8,21 @@
 #pragma once
 #include "Pacman.h"
 #include "Ghost.h"
+#include "ConsoleBuffer.h"
+#include "GameConfig.h"
 #include <vector>
-#include <windows.h>
-#include <iostream>
+#include <memory>
 
 class Game {
 private:
     std::vector<std::vector<char>> map;
     Pacman pacman;
     std::vector<Ghost> ghosts;
+    std::unique_ptr<ConsoleBuffer> console;
     int score;
     bool gameOver;
 
-    static const int MAP_WIDTH = 28;
-    static const int MAP_HEIGHT = 31;
     void initializeMap();
-    void clearScreen();
     void updateGame();
     void displayGame();
 
